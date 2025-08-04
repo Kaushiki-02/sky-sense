@@ -5,10 +5,13 @@ A beautiful, responsive weather application that provides real-time weather data
 ## Features
 
 - **Real-time Weather Data**: Current temperature, humidity, wind speed, pressure, and visibility
+- **Air Quality Index**: Real-time air quality data with color-coded indicators
+- **Weather Alerts**: Severe weather warnings and notifications
 - **5-Day Forecast**: Extended weather predictions with daily breakdowns
 - **Location Services**: Get weather for your current location with one click
 - **Search History**: Quick access to recently searched cities
 - **Dark/Light Theme**: Toggle between themes for comfortable viewing
+- **Push Notifications**: Get alerts for severe weather and poor air quality
 - **Responsive Design**: Works perfectly on desktop, tablet, and mobile devices
 - **Weather Themes**: Dynamic background colors based on weather conditions
 
@@ -39,6 +42,9 @@ A beautiful, responsive weather application that provides real-time weather data
 - **Search for a city**: Type any city name and press Enter or click the search button
 - **Use current location**: Click "Current Location" to get weather for your area
 - **Toggle theme**: Click the moon/sun icon in the header
+- **Toggle notifications**: Click the bell icon to enable/disable weather alerts
+- **View air quality**: Check the air quality indicator in the weather details
+- **View weather alerts**: Scroll down to see any active weather warnings
 - **View forecast**: Scroll down to see the 5-day weather forecast
 - **Access history**: Click on any city in the recent searches section
 

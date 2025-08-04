@@ -22,11 +22,16 @@ const weatherData = document.getElementById("weather-data");
 const weatherApp = document.getElementById("weather-app");
 const themeToggle = document.getElementById("theme-toggle");
 const historyItems = document.getElementById("history-items");
+const airQuality = document.getElementById("air-quality");
+const weatherAlerts = document.getElementById("weather-alerts");
+const alertsContainer = document.getElementById("alerts-container");
+const notificationToggle = document.getElementById("notification-toggle");
 
 // App State
 let state = {
   weatherHistory: JSON.parse(localStorage.getItem("weatherHistory")) || [],
   isDarkMode: localStorage.getItem("weatherDarkMode") === "true",
+  notificationsEnabled: localStorage.getItem("weatherNotifications") === "true",
 };
 
 // Initialize theme
@@ -35,7 +40,16 @@ if (state.isDarkMode) {
   themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
 }
 
+// Initialize notifications
+if (state.notificationsEnabled) {
+  notificationToggle.classList.add("active");
+  notificationToggle.innerHTML = '<i class="fas fa-bell"></i>';
+} else {
+  notificationToggle.innerHTML = '<i class="fas fa-bell-slash"></i>';
+}
+
 themeToggle.addEventListener("click", toggleTheme);
+notificationToggle.addEventListener("click", toggleNotifications);
 locationBtn.addEventListener("click", getWeatherByLocation);
 
 // Get weather by geolocation
@@ -91,6 +105,26 @@ function toggleTheme() {
   localStorage.setItem("weatherDarkMode", state.isDarkMode);
 }
 
+// Toggle notifications
+function toggleNotifications() {
+  state.notificationsEnabled = !state.notificationsEnabled;
+
+  if (state.notificationsEnabled) {
+    notificationToggle.classList.add("active");
+    notificationToggle.innerHTML = '<i class="fas fa-bell"></i>';
+    
+    // Request permission if not already granted
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  } else {
+    notificationToggle.classList.remove("active");
+    notificationToggle.innerHTML = '<i class="fas fa-bell-slash"></i>';
+  }
+
+  localStorage.setItem("weatherNotifications", state.notificationsEnabled);
+}
+
 // Event Listeners
 searchBtn.addEventListener("click", () => {
   const city = cityInput.value.trim();
@@ -127,8 +161,20 @@ async function getWeather(city) {
       currentWeather.coord.lon
     );
 
+    // Get air quality data
+    const airQualityData = await getAirQuality(
+      currentWeather.coord.lat,
+      currentWeather.coord.lon
+    );
+
+    // Get weather alerts
+    const alertsData = await getWeatherAlerts(
+      currentWeather.coord.lat,
+      currentWeather.coord.lon
+    );
+
     // Process and display the data
-    displayWeather(currentWeather, forecastData);
+    displayWeather(currentWeather, forecastData, airQualityData, alertsData);
   } catch (error) {
     showError(error.message || "Failed to fetch weather data");
   }
@@ -175,7 +221,7 @@ function updateSearchHistory() {
 }
 
 // Process and display the weather data
-function displayWeather(currentData, forecastData) {
+function displayWeather(currentData, forecastData, airQualityData, alertsData) {
   // Display current weather
   cityName.textContent = `${currentData.name}, ${currentData.sys.country}`;
   currentDate.textContent = formatDate(currentData.dt);
@@ -188,6 +234,9 @@ function displayWeather(currentData, forecastData) {
   pressure.textContent = `${currentData.main.pressure} hPa`;
   visibility.textContent = `${(currentData.visibility / 1000).toFixed(1)} km`;
 
+  // Display air quality
+  displayAirQuality(airQualityData);
+
   // Apply weather theme
   const themeClass = getWeatherTheme(currentData.weather[0].id);
   const currentWeatherElement = document.querySelector(".current-weather");
@@ -199,6 +248,9 @@ function displayWeather(currentData, forecastData) {
 
   // Display 5-day forecast
   displayForecast(forecastData);
+
+  // Display weather alerts
+  displayWeatherAlerts(alertsData);
 
   // Show the weather data section
   showWeatherData();
@@ -354,3 +406,177 @@ function showError(message) {
   weatherData.style.display = "none";
   errorMessage.textContent = message;
 }
+
+// Get air quality data
+async function getAirQuality(lat, lon) {
+  const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OPEN_WEATHER_API_KEY}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.cod === "404") {
+      throw new Error("Air quality data not available");
+    }
+
+    return data;
+  } catch (error) {
+    console.warn("Failed to fetch air quality data:", error);
+    return null;
+  }
+}
+
+// Get weather alerts
+async function getWeatherAlerts(lat, lon) {
+  const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=current,minutely,hourly,daily&appid=${OPEN_WEATHER_API_KEY}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.cod === "404") {
+      throw new Error("Weather alerts not available");
+    }
+
+    return data;
+  } catch (error) {
+    console.warn("Failed to fetch weather alerts:", error);
+    return null;
+  }
+}
+
+// Display air quality
+function displayAirQuality(airQualityData) {
+  if (!airQualityData || !airQualityData.list || !airQualityData.list[0]) {
+    airQuality.textContent = "N/A";
+    airQuality.className = "";
+    return;
+  }
+
+  const aqi = airQualityData.list[0].main.aqi;
+  const aqiText = getAQIText(aqi);
+  const aqiClass = getAQIClass(aqi);
+
+  airQuality.textContent = aqiText;
+  airQuality.className = aqiClass;
+
+  // Show notification for poor air quality
+  if (aqi >= 4 && state.notificationsEnabled) {
+    showNotification("Poor Air Quality Alert", `Air quality is ${aqiText.toLowerCase()} in your area.`);
+  }
+}
+
+// Display weather alerts
+function displayWeatherAlerts(alertsData) {
+  if (!alertsData || !alertsData.alerts || alertsData.alerts.length === 0) {
+    alertsContainer.innerHTML = `
+      <div class="no-alerts">
+        <i class="fas fa-check-circle"></i>
+        <p>No weather alerts for this location</p>
+      </div>
+    `;
+    return;
+  }
+
+  alertsContainer.innerHTML = "";
+
+  alertsData.alerts.forEach((alert) => {
+    const alertItem = document.createElement("div");
+    alertItem.className = `alert-item ${getAlertSeverity(alert.severity)}`;
+
+    const alertTime = new Date(alert.start * 1000);
+    const formattedTime = alertTime.toLocaleString();
+
+    alertItem.innerHTML = `
+      <div class="alert-header">
+        <i class="fas fa-exclamation-triangle alert-icon"></i>
+        <div class="alert-title">${alert.event}</div>
+      </div>
+      <div class="alert-description">${alert.description}</div>
+      <div class="alert-time">Effective: ${formattedTime}</div>
+    `;
+
+    alertsContainer.appendChild(alertItem);
+
+    // Show notification for severe alerts
+    if (alert.severity === "Extreme" && state.notificationsEnabled) {
+      showNotification("Severe Weather Alert", alert.event);
+    }
+  });
+}
+
+// Get AQI text based on index
+function getAQIText(aqi) {
+  switch (aqi) {
+    case 1:
+      return "Good";
+    case 2:
+      return "Fair";
+    case 3:
+      return "Moderate";
+    case 4:
+      return "Poor";
+    case 5:
+      return "Very Poor";
+    default:
+      return "Unknown";
+  }
+}
+
+// Get AQI CSS class based on index
+function getAQIClass(aqi) {
+  switch (aqi) {
+    case 1:
+      return "aqi-good";
+    case 2:
+      return "aqi-moderate";
+    case 3:
+      return "aqi-unhealthy-sensitive";
+    case 4:
+      return "aqi-unhealthy";
+    case 5:
+      return "aqi-very-unhealthy";
+    default:
+      return "";
+  }
+}
+
+// Get alert severity class
+function getAlertSeverity(severity) {
+  switch (severity) {
+    case "Extreme":
+      return "severe";
+    case "Severe":
+      return "severe";
+    case "Moderate":
+      return "moderate";
+    case "Minor":
+      return "info";
+    default:
+      return "info";
+  }
+}
+
+// Show browser notification
+function showNotification(title, body) {
+  if (!("Notification" in window)) {
+    return;
+  }
+
+  if (Notification.permission === "granted") {
+    new Notification(title, { body, icon: "🌤️" });
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        new Notification(title, { body, icon: "🌤️" });
+      }
+    });
+  }
+}
+
+// Request notification permission on app load
+document.addEventListener("DOMContentLoaded", () => {
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+});

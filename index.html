@@ -32,8 +32,13 @@
             <i class="fas fa-cloud-sun"></i>
             <h1>SkySense</h1>
           </div>
-          <div class="theme-toggle" id="theme-toggle">
-            <i class="fas fa-moon"></i>
+          <div class="header-controls">
+            <div class="notification-toggle" id="notification-toggle" title="Toggle notifications">
+              <i class="fas fa-bell"></i>
+            </div>
+            <div class="theme-toggle" id="theme-toggle">
+              <i class="fas fa-moon"></i>
+            </div>
           </div>
         </div>
 
@@ -131,7 +136,27 @@
                     <p class="detail-value" id="visibility">0 km</p>
                   </div>
                 </div>
+
+                <div class="detail-item">
+                  <i class="fas fa-lungs"></i>
+                  <div class="detail-info">
+                    <p class="detail-label">Air Quality</p>
+                    <p class="detail-value" id="air-quality">--</p>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <!-- Weather Alerts Section -->
+            <div class="weather-alerts" id="weather-alerts">
+              <h3>Weather Alerts</h3>
+              <div class="alerts-container" id="alerts-container">
+                <div class="no-alerts">
+                  <i class="fas fa-check-circle"></i>
+                  <p>No weather alerts for this location</p>
+                </div>
+              </div>
+            </div>
             </div>
 
             <!-- 5-Day Forecast -->
