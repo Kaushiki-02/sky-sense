@@ -6,7 +6,7 @@ A beautiful, responsive weather application that provides real-time weather data
 
 - **Real-time Weather Data**: Current temperature, humidity, wind speed, pressure, and visibility
 - **Air Quality Index**: Real-time air quality data with color-coded indicators
-- **Weather Alerts**: Severe weather warnings and notifications
+- **Weather Alerts**: Severe weather warnings and notifications *(requires paid OpenWeather API subscription)*
 - **5-Day Forecast**: Extended weather predictions with daily breakdowns
 - **Location Services**: Get weather for your current location with one click
 - **Search History**: Quick access to recently searched cities
@@ -14,12 +14,14 @@ A beautiful, responsive weather application that provides real-time weather data
 - **Push Notifications**: Get alerts for severe weather and poor air quality
 - **Responsive Design**: Works perfectly on desktop, tablet, and mobile devices
 - **Weather Themes**: Dynamic background colors based on weather conditions
+- **Weather Animations**: Smooth, weather-based animations and transitions
 
 ## Getting Started
 
 ### Prerequisites
 - A modern web browser
 - OpenWeather API key (free at [openweathermap.org](https://openweathermap.org/))
+- **Note**: Weather alerts require a paid OpenWeather OneCall API subscription. The free API key works for all other features.
 
 ### Installation
 
@@ -47,6 +49,7 @@ A beautiful, responsive weather application that provides real-time weather data
 - **View weather alerts**: Scroll down to see any active weather warnings
 - **View forecast**: Scroll down to see the 5-day weather forecast
 - **Access history**: Click on any city in the recent searches section
+- **Enjoy animations**: Watch weather-themed animations that respond to current conditions
 
 ## Technologies Used
 

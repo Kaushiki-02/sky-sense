@@ -261,6 +261,11 @@ function showWeatherData() {
   loading.style.display = "none";
   errorContainer.style.display = "none";
   weatherData.style.display = "block";
+  
+  // Add a small delay to ensure the display change is processed
+  setTimeout(() => {
+    weatherData.classList.add("show");
+  }, 10);
 }
 
 // Display the 5-day forecast
@@ -320,7 +325,9 @@ function getWeatherTheme(weatherId) {
     return "weather-theme-snow";
   } else if (weatherId === 800) {
     return "weather-theme-clear";
-  } else if (weatherId > 800) {
+  } else if (weatherId === 801) {
+    return "weather-theme-clear"; // Few clouds - still mostly clear
+  } else if (weatherId >= 802 && weatherId <= 804) {
     return "weather-theme-clouds";
   }
 
@@ -340,9 +347,17 @@ function getWeatherIcon(weatherId) {
   } else if (weatherId >= 700 && weatherId < 800) {
     return '<i class="fas fa-smog"></i>'; // Atmosphere
   } else if (weatherId === 800) {
-    return '<i class="fas fa-sun"></i>'; // Clear
+    return '<i class="fas fa-sun"></i>'; // Clear sky
+  } else if (weatherId === 801) {
+    return '<i class="fas fa-cloud-sun"></i>'; // Few clouds
+  } else if (weatherId === 802) {
+    return '<i class="fas fa-cloud"></i>'; // Scattered clouds
+  } else if (weatherId === 803) {
+    return '<i class="fas fa-cloud"></i>'; // Broken clouds
+  } else if (weatherId === 804) {
+    return '<i class="fas fa-cloud"></i>'; // Overcast clouds
   } else {
-    return '<i class="fas fa-cloud"></i>'; // Clouds
+    return '<i class="fas fa-cloud"></i>'; // Default fallback
   }
 }
 
@@ -397,6 +412,7 @@ function showLoading() {
   loading.style.display = "flex";
   errorContainer.style.display = "none";
   weatherData.style.display = "none";
+  weatherData.classList.remove("show");
 }
 
 // Show error message
@@ -404,6 +420,7 @@ function showError(message) {
   loading.style.display = "none";
   errorContainer.style.display = "flex";
   weatherData.style.display = "none";
+  weatherData.classList.remove("show");
   errorMessage.textContent = message;
 }
 
@@ -432,6 +449,16 @@ async function getWeatherAlerts(lat, lon) {
 
   try {
     const response = await fetch(url);
+    
+    // Check if the response is not ok (401, 403, etc.)
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.warn("Weather alerts require a paid OpenWeather API subscription");
+        return null;
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data = await response.json();
 
     if (data.cod === "404") {
@@ -440,7 +467,7 @@ async function getWeatherAlerts(lat, lon) {
 
     return data;
   } catch (error) {
-    console.warn("Failed to fetch weather alerts:", error);
+    console.warn("Failed to fetch weather alerts:", error.message);
     return null;
   }
 }
@@ -468,7 +495,17 @@ function displayAirQuality(airQualityData) {
 
 // Display weather alerts
 function displayWeatherAlerts(alertsData) {
-  if (!alertsData || !alertsData.alerts || alertsData.alerts.length === 0) {
+  if (!alertsData) {
+    alertsContainer.innerHTML = `
+      <div class="no-alerts">
+        <i class="fas fa-info-circle"></i>
+        <p>Weather alerts require a paid OpenWeather subscription</p>
+      </div>
+    `;
+    return;
+  }
+  
+  if (!alertsData.alerts || alertsData.alerts.length === 0) {
     alertsContainer.innerHTML = `
       <div class="no-alerts">
         <i class="fas fa-check-circle"></i>
